@@ -300,8 +300,8 @@ version: 2
 
 sources:
   - name: hr_raw
-    database: "{{ target.catalog }}"
-    schema: staging
+    database: dwh_raw
+    schema: hr
     tables:
       - name: raw_hr__employees
         columns:
@@ -507,8 +507,8 @@ version: 2
 
 sources:
   - name: mkt_raw
-    database: "{{ target.catalog }}"
-    schema: staging
+    database: dwh_raw
+    schema: mkt
     tables:
       - name: raw_mkt__listings
 
@@ -694,8 +694,8 @@ version: 2
 
 sources:
   - name: pay_raw
-    database: "{{ target.catalog }}"
-    schema: staging
+    database: dwh_raw
+    schema: pay
     tables:
       - name: raw_pay__transactions
 
@@ -1863,7 +1863,36 @@ WHERE status != 'MATCH';
 
 ## Phase 15 — CI/CD
 
-`.github/workflows/ci.yml`:
+### 15.1 `databricks.yml` (bundle definition)
+
+This file declares the two deployment targets. When you have a single workspace (this POC),
+both targets point to the same host — the only difference is the catalog dbt writes to
+(`dwh_udev` vs `dwh_upro`). When you provision a second workspace, change the `prod` host
+and drop in the service principal. Nothing else in the project moves.
+
+```yaml
+bundle:
+  name: poc-dwh
+
+targets:
+
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://<your-workspace>.azuredatabricks.net
+
+  prod:
+    mode: production
+    workspace:
+      host: https://<your-workspace>.azuredatabricks.net
+      # Two-workspace upgrade: replace the host above with the prod workspace URL.
+      # Add the real service principal name below.
+    run_as:
+      service_principal_name: <prod-sp>@<tenant>.com
+```
+
+### 15.2 `.github/workflows/ci.yml`
 ```yaml
 name: CI
 

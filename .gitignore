@@ -5,3 +5,5 @@ dbt/logs/
 .env
 __pycache__/
 *.pyc
+.claude/settings.local.json
+.mcp.json

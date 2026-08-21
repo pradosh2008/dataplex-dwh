@@ -189,7 +189,7 @@ dataplex-dwh/
 │   └── models/
 ├── sql/
 │   ├── phase_0_setup.sql           ← Phase 0 Databricks setup
-│   └── adhoc_sql.sql               ← Phase 12 dual-run bootstrap
+│   └── adhoc_cleanup.sql           ← drops old raw tables from dwh_udev.staging
 └── docs/
     ├── spec.md                     ← master build spec (reference)
     └── phases/                     ← one detailed doc per phase
