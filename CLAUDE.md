@@ -6,9 +6,11 @@ Full spec: `docs/spec.md`. Phase docs: `docs/phases/`.
 
 ## Current state
 - **Phase 0 complete** — catalogs, schemas, raw tables, folder structure all done
-- **Active branch:** `fix/phase-0-raw-catalog-separation` — not yet merged to main
+- **Phase 1 in progress** — all 7 dbt files built, not yet run
+- **Active branch:** `phase/1-hr-domain`
 - **Databricks MCP:** configured at `.claude/settings.local.json` (gitignored), server name `databricks-dataplex`, workspace `dbc-9924eb44-5d89.cloud.databricks.com`
-- **Next action:** merge the fix branch to main, then start Phase 1 (HR domain only)
+- **SQL Warehouse:** `dwh-udev` — Serverless (trial constraint), ID `39a77203292f5c0b`
+- **Next action:** run `dbt deps` → `dbt seed` → `dbt build --full-refresh` and verify
 
 ## Three-catalog architecture (key decision)
 | Catalog | Role | dbt interaction |

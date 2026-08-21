@@ -1,0 +1,42 @@
+name: poc_dwh
+version: '1.0.0'
+config-version: 2
+profile: poc_dwh
+
+model-paths: ["models"]
+seed-paths:  ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+dispatch:
+  - macro_namespace: dbt_utils
+    search_order: ['poc_dwh', 'dbt_utils']
+
+models:
+  poc_dwh:
+
+    staging:
+      +schema: staging
+      +materialized: view
+      hr:
+        +tags: ['hr']
+
+    intermediate:
+      +schema: intermediate
+      +materialized: ephemeral
+      hr:
+        +tags: ['hr']
+
+    marts:
+      hr:
+        +schema: hr
+        +materialized: incremental
+        +tags: ['hr']
+
+seeds:
+  poc_dwh:
+    +schema: seeds
+    +tags: ['seeds']
+
+on-run-end:
+  - "{{ elementary.on_run_end() }}"
