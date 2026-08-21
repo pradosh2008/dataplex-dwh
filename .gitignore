@@ -3,6 +3,7 @@ dbt/target/
 dbt/dbt_packages/
 dbt/logs/
 .env
+.venv/
 __pycache__/
 *.pyc
 .claude/settings.local.json

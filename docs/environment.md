@@ -5,6 +5,37 @@ Add to this file whenever you discover something non-obvious about the environme
 
 ---
 
+## Local Python Setup
+
+### Python version
+dbt-databricks 1.8.7 requires Python 3.11 or 3.12. **Python 3.14 does not work** — pandas (a dbt dependency) has no wheel for 3.14 yet and the install fails.
+
+Install Python 3.12 via Homebrew if needed:
+```bash
+brew install python@3.12
+```
+
+### Virtual environment
+Always use a venv — never install into the system Python.
+
+```bash
+# Create (once)
+python3.12 -m venv .venv
+
+# Activate (every new terminal session)
+source .venv/bin/activate
+
+# Install dbt
+pip install dbt-databricks==1.8.7
+```
+
+The `.venv/` folder is gitignored. If you clone the repo fresh, recreate it with the above commands.
+
+### dbt version
+Pinned to `1.8.7` to match the spec. Ignore "update available" warnings from `dbt --version`. The `spark` plugin showing as "not compatible" is noise — this project uses the `databricks` plugin only.
+
+---
+
 ## Databricks Workspace
 
 ### Trial workspace types — critical distinction
