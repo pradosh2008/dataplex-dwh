@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: hr_raw
+    database: dwh_raw
+    schema: hr
+    tables:
+      - name: raw_hr__employees
+        columns:
+          - name: employee_id
+            data_tests: [not_null]
+          - name: event_date
+            data_tests: [not_null]

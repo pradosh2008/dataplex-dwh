@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: stg_hr__employees
+    description: "Renamed HR employee records"
+    columns:
+      - name: employee_id
+        data_tests: [not_null]
+      - name: status
+        data_tests:
+          - accepted_values:
+              values: ['active', 'terminated']

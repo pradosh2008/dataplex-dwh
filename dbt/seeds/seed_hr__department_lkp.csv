@@ -1,0 +1,5 @@
+department_id,department_name,cost_centre
+10,Engineering,CC-ENG
+20,Sales,CC-SALES
+30,Operations,CC-OPS
+40,Finance,CC-FIN
