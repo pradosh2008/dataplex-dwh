@@ -16,10 +16,10 @@ monitoring dashboard.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        RAW SOURCES                              │
-│  staging.raw_hr__employees                                      │
-│  staging.raw_mkt__listings                                      │
-│  staging.raw_pay__transactions                                  │
+│              dwh_raw  (Bronze — ingestion writes here)          │
+│  hr.raw_hr__employees                                           │
+│  mkt.raw_mkt__listings                                          │
+│  pay.raw_pay__transactions                                      │
 └───────────────────────┬─────────────────────────────────────────┘
                         │ dbt
                         ▼

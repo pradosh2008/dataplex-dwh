@@ -140,14 +140,26 @@ or copy-paste the blocks below section by section.
 admin run this step for you.
 
 ```sql
--- Dev catalog
+-- Raw landing zone (Bronze) — ingestion writes here, dbt only reads from here
+CREATE CATALOG IF NOT EXISTS dwh_raw;
+
+-- Dev catalog — all dbt output lands here (Silver + Gold)
 CREATE CATALOG IF NOT EXISTS dwh_udev;
 
--- Prod catalog
+-- Prod catalog — same as dev but for production
 CREATE CATALOG IF NOT EXISTS dwh_upro;
 ```
 
-Then for each catalog, create the schemas:
+Create schemas in the raw catalog (one schema per source domain):
+
+```sql
+USE CATALOG dwh_raw;
+CREATE SCHEMA IF NOT EXISTS hr;
+CREATE SCHEMA IF NOT EXISTS mkt;
+CREATE SCHEMA IF NOT EXISTS pay;
+```
+
+Create schemas in dev and prod catalogs (dbt writes here):
 
 ```sql
 USE CATALOG dwh_udev;
@@ -167,12 +179,18 @@ CREATE SCHEMA IF NOT EXISTS staging;
 -- ... (same as above)
 ```
 
-**Why two catalogs?**
-- `dwh_udev` = dev/test environment. dbt target `udev` writes here.
-- `dwh_upro` = production. dbt target `upro` writes here.
-- Keeping them as separate Unity Catalog catalogs means you can apply different
-  access policies, spot-check prod without affecting dev, and run CI against udev
-  without risk of touching prod.
+**Why three catalogs?**
+
+| Catalog | Role | Who writes | Who reads |
+|---|---|---|---|
+| `dwh_raw` | Bronze / raw landing zone | Ingestion pipelines | dbt staging models |
+| `dwh_udev` | Silver + Gold (dev) | dbt | Analysts, BI tools (dev) |
+| `dwh_upro` | Silver + Gold (prod) | dbt | Analysts, BI tools (prod) |
+
+Separating raw into its own catalog means:
+- Raw data is immutable — ingestion can replay without affecting dbt output
+- Different access policies per catalog (raw = read-only for most users)
+- Easy to debug: compare raw vs staging to isolate where an issue was introduced
 
 **Why create all schemas upfront?**
 dbt can create schemas automatically but it requires elevated privileges. Creating them
@@ -183,12 +201,13 @@ can run dbt without needing DDL privileges.
 
 ## 0.5 Databricks: create raw source tables + insert data
 
-Still in the Databricks SQL editor:
+Still in the Databricks SQL editor. Raw tables live in `dwh_raw` — the bronze catalog.
+dbt will never write here, only read.
 
 ```sql
-USE CATALOG dwh_udev;
+USE CATALOG dwh_raw;
 
-CREATE TABLE IF NOT EXISTS staging.raw_hr__employees (
+CREATE TABLE IF NOT EXISTS hr.raw_hr__employees (
     employee_id   BIGINT,
     full_name     STRING,
     department_id INT,
@@ -199,7 +218,7 @@ CREATE TABLE IF NOT EXISTS staging.raw_hr__employees (
     event_date    DATE
 ) USING DELTA PARTITIONED BY (event_date);
 
-CREATE TABLE IF NOT EXISTS staging.raw_mkt__listings (
+CREATE TABLE IF NOT EXISTS mkt.raw_mkt__listings (
     listing_id  BIGINT,
     seller_id   BIGINT,
     category_id INT,
@@ -210,7 +229,7 @@ CREATE TABLE IF NOT EXISTS staging.raw_mkt__listings (
     event_date  DATE
 ) USING DELTA PARTITIONED BY (event_date);
 
-CREATE TABLE IF NOT EXISTS staging.raw_pay__transactions (
+CREATE TABLE IF NOT EXISTS pay.raw_pay__transactions (
     transaction_id BIGINT,
     buyer_id       BIGINT,
     seller_id      BIGINT,
@@ -223,10 +242,10 @@ CREATE TABLE IF NOT EXISTS staging.raw_pay__transactions (
 ) USING DELTA PARTITIONED BY (event_date);
 ```
 
-Insert sample data:
+Insert sample data (fully qualified names to be safe):
 
 ```sql
-INSERT INTO staging.raw_hr__employees VALUES
+INSERT INTO dwh_raw.hr.raw_hr__employees VALUES
     (1, 'Alice Smith',  10, 75000, '2020-01-15', 'active',     1, '2026-08-18'),
     (2, 'Bob Jones',    20, 65000, '2019-06-01', 'active',     1, '2026-08-18'),
     (3, 'Carol White',  10, 80000, '2021-03-10', 'terminated', 2, '2026-08-18'),
@@ -234,14 +253,14 @@ INSERT INTO staging.raw_hr__employees VALUES
     (5, 'Eve Davis',    20, 90000, '2018-07-04', 'active',     1, '2026-08-19'),
     (6, 'Frank Miller', 10, 72000, '2023-02-14', 'active',     3, '2026-08-20');
 
-INSERT INTO staging.raw_mkt__listings VALUES
+INSERT INTO dwh_raw.mkt.raw_mkt__listings VALUES
     (101, 1, 10, 150.00, 'active',  1, '2026-08-15', '2026-08-18'),
     (102, 2, 20, 299.99, 'sold',    1, '2026-08-10', '2026-08-18'),
     (103, 4, 10,  75.50, 'active',  2, '2026-08-17', '2026-08-19'),
     (104, 5, 30, 499.00, 'active',  1, '2026-08-18', '2026-08-19'),
     (105, 1, 20, 199.00, 'expired', 3, '2026-08-01', '2026-08-20');
 
-INSERT INTO staging.raw_pay__transactions VALUES
+INSERT INTO dwh_raw.pay.raw_pay__transactions VALUES
     (1001, 3, 1, 102, 299.99, 'EUR', 'completed', 1, '2026-08-18'),
     (1002, 2, 4, 103,  75.50, 'EUR', 'completed', 2, '2026-08-19'),
     (1003, 1, 5, 104, 499.00, 'EUR', 'failed',    1, '2026-08-19'),
@@ -262,11 +281,11 @@ incremental build twice and see that:
 Run the verification query in the SQL editor:
 
 ```sql
-SELECT 'raw_hr__employees'     AS table_name, COUNT(*) AS row_count FROM dwh_udev.staging.raw_hr__employees
+SELECT 'raw_hr__employees'     AS table_name, COUNT(*) AS row_count FROM dwh_raw.hr.raw_hr__employees
 UNION ALL
-SELECT 'raw_mkt__listings'     AS table_name, COUNT(*) AS row_count FROM dwh_udev.staging.raw_mkt__listings
+SELECT 'raw_mkt__listings'     AS table_name, COUNT(*) AS row_count FROM dwh_raw.mkt.raw_mkt__listings
 UNION ALL
-SELECT 'raw_pay__transactions' AS table_name, COUNT(*) AS row_count FROM dwh_udev.staging.raw_pay__transactions;
+SELECT 'raw_pay__transactions' AS table_name, COUNT(*) AS row_count FROM dwh_raw.pay.raw_pay__transactions;
 ```
 
 Expected result:
