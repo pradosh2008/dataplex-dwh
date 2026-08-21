@@ -1,0 +1,19 @@
+bundle:
+  name: poc-dwh
+
+targets:
+
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://<your-workspace>.azuredatabricks.net
+
+  prod:
+    mode: production
+    workspace:
+      host: https://<your-workspace>.azuredatabricks.net
+      # Two-workspace upgrade: replace the host above with the prod workspace URL.
+      # Add the real service principal name below.
+    run_as:
+      service_principal_name: <prod-sp>@<tenant>.com

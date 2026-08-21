@@ -304,7 +304,7 @@ Understanding these now will make every subsequent phase easier to read.
 
 | Convention | Example | Meaning |
 |---|---|---|
-| `raw_<domain>__<entity>` | `raw_hr__employees` | Raw source table in `staging` schema |
+| `raw_<domain>__<entity>` | `raw_hr__employees` | Raw source table in `dwh_raw.<domain>` schema |
 | `stg_<domain>__<entity>` | `stg_hr__employees` | dbt staging view |
 | `int_<domain>__<entity>_<suffix>` | `int_hr__employee_metrics` | dbt intermediate (ephemeral) |
 | `<domain>__<entity>` | `hr__employee_summary` | dbt mart table |
@@ -324,9 +324,9 @@ Phase 0 is complete when:
 - [x] All tools installed (`dbt --version` works)
 - [x] `dataplex-dwh/` folder structure exists
 - [x] `.gitignore` is in place
-- [ ] `dwh_udev` and `dwh_upro` catalogs exist in Databricks
-- [ ] All 9 schemas exist in both catalogs
-- [ ] 3 raw tables exist in `dwh_udev.staging`
+- [ ] `dwh_raw`, `dwh_udev`, and `dwh_upro` catalogs exist in Databricks
+- [ ] All schemas exist in all three catalogs
+- [ ] 3 raw tables exist in `dwh_raw` (`hr`, `mkt`, `pay` schemas)
 - [ ] Row counts match: 6 / 5 / 4
 
 **Next:** [Phase 1 — First Working Model (HR only)](./phase-1-hr-domain.md)
