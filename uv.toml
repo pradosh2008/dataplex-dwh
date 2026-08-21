@@ -1,0 +1,5 @@
+# Force public PyPI — overrides any company-level index configured elsewhere.
+# Required on machines where a work project sets a private registry as default.
+[[index]]
+url = "https://pypi.org/simple/"
+default = true
