@@ -1,0 +1,46 @@
+# Copy this file to profiles.yml and fill in your values.
+# profiles.yml is git-ignored — never commit it.
+
+poc_dwh:
+  target: udev
+  outputs:
+
+    # Dev — classic SQL warehouse
+    udev:
+      type: databricks
+      host: <your-workspace>.azuredatabricks.net
+      http_path: /sql/1.0/warehouses/<classic-warehouse-id>
+      token: "{{ env_var('DBT_TOKEN') }}"
+      catalog: dwh_udev
+      schema: staging
+      threads: 8
+
+    # Dev — serverless SQL warehouse (added in Phase 9)
+    udev_serverless:
+      type: databricks
+      host: <your-workspace>.azuredatabricks.net
+      http_path: /sql/1.0/warehouses/<serverless-warehouse-id>
+      token: "{{ env_var('DBT_TOKEN') }}"
+      catalog: dwh_udev
+      schema: staging
+      threads: 8
+
+    # Production — classic SQL warehouse (added in Phase 9)
+    upro:
+      type: databricks
+      host: <your-workspace>.azuredatabricks.net
+      http_path: /sql/1.0/warehouses/<classic-warehouse-id>
+      token: "{{ env_var('DBT_TOKEN_PROD') }}"
+      catalog: dwh_upro
+      schema: staging
+      threads: 16
+
+    # Production — serverless SQL warehouse (added in Phase 9)
+    upro_serverless:
+      type: databricks
+      host: <your-workspace>.azuredatabricks.net
+      http_path: /sql/1.0/warehouses/<serverless-warehouse-id>
+      token: "{{ env_var('DBT_TOKEN_PROD') }}"
+      catalog: dwh_upro
+      schema: staging
+      threads: 16
