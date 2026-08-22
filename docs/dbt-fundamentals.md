@@ -353,13 +353,29 @@ packages:
 
 Observability layer — automatically logs dbt run metadata into the warehouse after every build.
 
-- `on-run-end: elementary.on_run_end()` in `dbt_project.yml` triggers it
-- Creates 30 tables/views in `dwh_udev.elementary`: `dbt_run_results`, `dbt_models`, `elementary_test_results` etc.
-- **One-time setup required:** `dbt run -s elementary --target udev --full-refresh` (run once to create the tables)
-- Until setup is run, the hook fires but skips silently — doesn't break anything
-- Schema is configured by putting `elementary: +schema: elementary` under the top-level `models:` key in `dbt_project.yml`
+Two distinct operations:
 
-**Common pitfall:** If `dbt_project.yml` has two separate `models:` top-level keys, YAML silently discards the first. Always keep all model configs under one `models:` block.
+1. **Setup (once):** `dbt run -s elementary --target udev --full-refresh` — builds the 30 empty tables in `dwh_udev.elementary`. Until this runs, the hook fires but skips silently.
+2. **Population (every build):** elementary's `on-run-end` hook fires automatically after every `dbt build` and inserts run data into those tables.
+
+**Do NOT add `elementary.on_run_end()` manually to `dbt_project.yml`.** Elementary auto-registers its own hook when installed as a package. Adding it manually causes it to fire twice → duplicate rows in every elementary table.
+
+**Where elementary gets its data:** it reads dbt's own `target/run_results.json` — written by dbt after every command. It does not read your HR/mart/raw tables. The data source is dbt's internal execution log.
+
+**Key tables:**
+
+| Table | What it stores |
+|---|---|
+| `dbt_invocations` | One row per dbt command execution |
+| `dbt_run_results` | One row per model/test per run (models + tests together) |
+| `model_run_results` | View over dbt_run_results — models only |
+| `elementary_test_results` | Test results only — test name, status, failures count, SQL used |
+
+**invocation_id:** a UUID dbt generates at the start of every command. Everything within one `dbt build` shares the same id — use it to group all models/tests from a specific run when debugging. Also stored in `target/run_results.json` under `metadata.invocation_id`.
+
+**Scope:** elementary captures whatever was in `--select` for that build. `dbt build --select tag:hr` only records HR models in that run. Each run adds to the history — over time you build a complete record across all models.
+
+**Schema config:** put `elementary: +schema: elementary` inside the existing top-level `models:` block — never as a separate `models:` key (YAML silently discards duplicate keys).
 
 Used in Phase 13 for alert wiring. For now it's installed but dormant.
 
