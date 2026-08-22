@@ -360,7 +360,11 @@ Two distinct operations:
 
 **Do NOT add `elementary.on_run_end()` manually to `dbt_project.yml`.** Elementary auto-registers its own hook when installed as a package. Adding it manually causes it to fire twice → duplicate rows in every elementary table.
 
-**Where elementary gets its data:** it reads dbt's own `target/run_results.json` — written by dbt after every command. It does not read your HR/mart/raw tables. The data source is dbt's internal execution log.
+**Where elementary gets its data:** it reads two files dbt writes after every command:
+- `target/run_results.json` — execution data: which models/tests ran, status, timing, invocation_id
+- `target/manifest.json` — project structure: model tags, schema, columns, materialization type, dependencies
+
+It joins both to produce the combined records in the warehouse. `run_results.json` alone doesn't know what tags or columns a model has — that comes from the manifest. That's why `elementary_test_results` can show `column_name`, `table_name`, `tags` even though those aren't in the execution result itself.
 
 **Key tables:**
 
@@ -378,6 +382,49 @@ Two distinct operations:
 **Schema config:** put `elementary: +schema: elementary` inside the existing top-level `models:` block — never as a separate `models:` key (YAML silently discards duplicate keys).
 
 Used in Phase 13 for alert wiring. For now it's installed but dormant.
+
+---
+
+## manifest.json — the compiled project blueprint
+
+Written to `dbt/target/manifest.json` every time any dbt command runs. Contains a complete map of your entire project — every model, test, source, seed, macro, their relationships, configs, tags, columns, and compiled SQL.
+
+**What's inside:**
+```json
+{
+  "nodes": {
+    "model.poc_dwh.stg_hr__employees": {
+      "name": "stg_hr__employees",
+      "schema": "staging",
+      "tags": ["hr"],
+      "depends_on": { "nodes": ["source.poc_dwh.hr_raw.raw_hr__employees"] },
+      "columns": { "employee_id": {...}, "status": {...} },
+      "compiled_code": "select * from dwh_raw.hr.raw_hr__employees ..."
+    }
+  }
+}
+```
+
+**Why it's special:**
+
+1. **It IS the DAG** — when you run `dbt build`, dbt reads manifest to determine execution order. The dependency graph comes from this file.
+
+2. **Everything external reads it** — elementary, dbt docs, Airflow operators, CI tools all parse manifest to understand your project without running it.
+
+3. **State-based selection** — dbt can compare two manifests (e.g. current branch vs main) and only run what changed:
+   ```bash
+   dbt build --select state:modified+
+   ```
+   "Run only models whose SQL changed, plus everything downstream." Used in CI pipelines to avoid running the full project on every PR.
+
+**manifest.json vs run_results.json:**
+
+| | `manifest.json` | `run_results.json` |
+|---|---|---|
+| Written when | Every compile/parse | After every run |
+| Contains | Project structure | Execution results |
+| Changes when | You change SQL/YML | You run dbt |
+| Used by | DAG, docs, selectors, elementary (structure) | Elementary (execution data) |
 
 ---
 
