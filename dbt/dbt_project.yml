@@ -41,5 +41,3 @@ seeds:
     +schema: seeds
     +tags: ['seeds']
 
-on-run-end:
-  - "{{ elementary.on_run_end() }}"
