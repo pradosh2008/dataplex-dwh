@@ -161,6 +161,11 @@ If elementary models end up in the wrong schema (e.g. `staging`), the cause is a
 **Fix:** Re-ran `dbt seed` to reload into correct schema.  
 **Learning:** When schema naming changes, re-seed before building. Seed tags are separate from domain tags — run `dbt seed` independently.
 
+### 5. `replace_where` not supported on Databricks Serverless
+**Cause:** `replace_where` generates `INSERT OVERWRITE ... REPLACE WHERE (subquery)`. Databricks Serverless doesn't support a subquery inside `REPLACE WHERE`.  
+**Fix:** Switched to `merge` strategy with `unique_key=['event_date', 'site_id', 'department_name', 'cost_centre', 'salary_band']`.  
+**Learning:** `replace_where` works on classic clusters only. Serverless requires `merge` or `append`. Always test incremental strategy on the actual compute type early.
+
 ### 4. `dbt build --select tag:hr` doesn't include seeds
 **Cause:** Seed is tagged `seeds`, not `hr`. The selector skips it.  
 **Fix:** Run `dbt seed` separately, then `dbt build --select tag:hr`.  

@@ -221,7 +221,35 @@ columns:
 
 ---
 
-## Incremental strategy — replace_where
+## Incremental strategy — merge (used in this project)
+
+**Strategy used:** `merge` — required because this project runs on Databricks Serverless.
+
+`replace_where` (the originally designed strategy) generates `INSERT OVERWRITE ... REPLACE WHERE (subquery)` — Databricks Serverless does not support a subquery inside that clause. Classic clusters support it fine.
+
+`merge` does UPSERT — for each row in the new data, if a matching row exists (by `unique_key`) it updates it, if not it inserts it. Fully supported on Serverless.
+
+```sql
+{{
+    config(
+        materialized='incremental',
+        incremental_strategy='merge',
+        unique_key=['event_date', 'site_id', 'department_name', 'cost_centre', 'salary_band']
+    )
+}}
+
+{% if is_incremental() %}
+    where event_date > date_sub((select max(event_date) from {{ this }}), 2)
+{% endif %}
+```
+
+**`unique_key`** — the combination of columns that uniquely identifies one row in the mart. dbt uses these to match existing rows for update vs new rows for insert.
+
+**Self-healing still works:** the 2-day lookback WHERE clause is in the SELECT (not in REPLACE WHERE), so Serverless handles it fine.
+
+---
+
+## Incremental strategy — replace_where (classic clusters only)
 
 Used in all mart models. The pattern:
 
