@@ -5,6 +5,50 @@ Add to this file whenever you discover something non-obvious about the environme
 
 ---
 
+## Local Python Setup
+
+### Python version
+dbt-databricks 1.8.7 requires Python 3.11 or 3.12. **Python 3.14 does not work** — pandas (a dbt dependency) has no wheel for 3.14 yet and the install fails.
+
+Install Python 3.12 via Homebrew if needed:
+```bash
+brew install python@3.12
+```
+
+### Package manager — uv (not pip)
+This project uses `uv` — faster, better dependency resolution, manages Python versions.
+
+```bash
+brew install uv
+```
+
+### Virtual environment
+Always use a venv — never install into the system Python.
+
+```bash
+# Create (once)
+uv venv .venv --python 3.12
+
+# Activate (every new terminal session)
+source .venv/bin/activate
+
+# Install dbt
+UV_INDEX_URL=https://pypi.org/simple/ UV_EXTRA_INDEX_URL="" uv pip install dbt-databricks==1.8.7
+```
+
+The `.venv/` folder is gitignored. If you clone the repo fresh, recreate it with the above commands.
+
+### Private registry conflict
+If your machine has a work project that sets a private PyPI registry as the uv default (e.g. `artifactory.mpi-internal.com`), uv inherits it even when running from this project. The `uv.toml` at the project root overrides this — but if it still fails, use the explicit env vars above:
+```bash
+UV_INDEX_URL=https://pypi.org/simple/ UV_EXTRA_INDEX_URL="" uv pip install ...
+```
+
+### dbt version
+Pinned to `1.8.7` to match the spec. Ignore "update available" warnings from `dbt --version`. The `spark` plugin showing as "not compatible" is noise — this project uses the `databricks` plugin only.
+
+---
+
 ## Databricks Workspace
 
 ### Trial workspace types — critical distinction

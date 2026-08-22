@@ -1,18 +1,8 @@
 {{
     config(
         materialized='incremental',
-        incremental_strategy='replace_where',
-        incremental_predicates=[
-            (
-                "event_date between '"
-                ~ var("start_of_backfill_window")
-                ~ "' and '"
-                ~ var("end_of_backfill_window")
-                ~ "'"
-                if var("start_of_backfill_window", false) and var("end_of_backfill_window", false)
-                else "event_date > date_sub((select max(event_date) from " ~ this ~ "), 2)"
-            )
-        ],
+        incremental_strategy='merge',
+        unique_key=['event_date', 'site_id', 'department_name', 'cost_centre', 'salary_band'],
         partition_by=['event_date', 'site_id'],
         cluster_by=['department_name'],
         tags=['hr']

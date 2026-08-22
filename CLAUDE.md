@@ -6,11 +6,12 @@ Full spec: `docs/spec.md`. Phase docs: `docs/phases/`.
 
 ## Current state
 - **Phase 0 complete** — catalogs, schemas, raw tables, folder structure all done
-- **Phase 1 in progress** — all 7 dbt files built, not yet run
-- **Active branch:** `phase/1-hr-domain`
+- **Phase 1 complete** — HR domain running end-to-end, `dwh_udev.hr.hr__employee_summary` verified (6 rows)
+- **Active branch:** `phase/1-hr-domain` — not yet merged to main
 - **Databricks MCP:** configured at `.claude/settings.local.json` (gitignored), server name `databricks-dataplex`, workspace `dbc-9924eb44-5d89.cloud.databricks.com`
-- **SQL Warehouse:** `dwh-udev` — Serverless (trial constraint), ID `39a77203292f5c0b`
-- **Next action:** run `dbt deps` → `dbt seed` → `dbt build --full-refresh` and verify
+- **SQL Warehouse:** `dwh-udev` — Serverless (trial constraint), ID `39a77203292f5c0b`, PAT in `dbt/profiles.yml` (gitignored)
+- **Local env:** `.venv` with Python 3.12 + dbt-databricks 1.8.7 via uv
+- **Next action:** merge Phase 1 PR, then start Phase 2 (marketplace domain)
 
 ## Three-catalog architecture (key decision)
 | Catalog | Role | dbt interaction |

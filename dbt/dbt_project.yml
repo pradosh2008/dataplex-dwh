@@ -33,10 +33,11 @@ models:
         +materialized: incremental
         +tags: ['hr']
 
+  elementary:
+    +schema: elementary
+
 seeds:
   poc_dwh:
     +schema: seeds
     +tags: ['seeds']
 
-on-run-end:
-  - "{{ elementary.on_run_end() }}"

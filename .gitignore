@@ -2,7 +2,9 @@ dbt/profiles.yml
 dbt/target/
 dbt/dbt_packages/
 dbt/logs/
+dbt/.user.yml
 .env
+.venv/
 __pycache__/
 *.pyc
 .claude/settings.local.json
