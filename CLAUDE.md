@@ -11,7 +11,17 @@ Full spec: `docs/spec.md`. Phase docs: `docs/phases/`.
 - **Databricks MCP:** configured at `.claude/settings.local.json` (gitignored), server name `databricks-dataplex`, workspace `dbc-9924eb44-5d89.cloud.databricks.com`
 - **SQL Warehouse:** `dwh-udev` — Serverless (trial constraint), ID `39a77203292f5c0b`, PAT in `dbt/profiles.yml` (gitignored)
 - **Local env:** `.venv` with Python 3.12 + dbt-databricks 1.8.7 via uv
-- **Next action:** merge Phase 1 PR, then start Phase 2 (marketplace domain)
+- **Next action:** raise PR for `phase/1-hr-domain` → merge to main → start Phase 2 (marketplace domain)
+
+## Serverless constraint (important)
+All mart models must use `incremental_strategy='merge'` with a `unique_key` list — NOT `replace_where`.
+`replace_where` generates `INSERT OVERWRITE ... REPLACE WHERE (subquery)` which Databricks Serverless does not support.
+
+## Elementary setup (done — Phase 1)
+- Tables live in `dwh_udev.elementary` (30 tables/views)
+- One-time setup already run: `dbt run -s elementary --full-refresh`
+- Do NOT add `elementary.on_run_end()` manually to `dbt_project.yml` — elementary registers its own hook automatically
+- Schema config lives inside the single `models:` block in `dbt_project.yml` as `elementary: +schema: elementary`
 
 ## Three-catalog architecture (key decision)
 | Catalog | Role | dbt interaction |
@@ -54,8 +64,8 @@ sources:
 Double underscore (`__`) separates domain prefix from entity name.
 
 ## Incremental pattern used in all mart models
-`replace_where` strategy with a self-healing 2-day lookback window.
-Backfill vars: `start_of_backfill_window` / `end_of_backfill_window`.
+`merge` strategy (required for Serverless) with `unique_key` as the list of grain columns.
+Self-healing 2-day lookback WHERE clause in the SELECT. Backfill vars: `start_of_backfill_window` / `end_of_backfill_window`.
 
 ## Phase roadmap (quick reference)
 ```
