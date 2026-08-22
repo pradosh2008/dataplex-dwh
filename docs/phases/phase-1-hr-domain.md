@@ -133,6 +133,17 @@ SELECT * FROM dwh_udev.hr.hr__employee_summary;
 
 ---
 
+## Elementary schema
+
+Elementary models land in `dwh_udev.elementary` (30 tables/views — run metadata, test results, model lineage).
+
+**One-time setup:** `dbt run -s elementary --target udev --full-refresh`  
+After that, the `on-run-end` hook keeps them updated automatically on every `dbt build`.
+
+If elementary models end up in the wrong schema (e.g. `staging`), the cause is a duplicate `models:` YAML key — the second block silently overwrites the first. Fix: merge both under one `models:` top-level key in `dbt_project.yml`.
+
+---
+
 ## Issues encountered and resolved
 
 ### 1. Wrong schema names (staging_hr instead of hr)

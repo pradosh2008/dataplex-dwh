@@ -33,6 +33,9 @@ models:
         +materialized: incremental
         +tags: ['hr']
 
+  elementary:
+    +schema: elementary
+
 seeds:
   poc_dwh:
     +schema: seeds

@@ -326,9 +326,12 @@ packages:
 Observability layer — automatically logs dbt run metadata into the warehouse after every build.
 
 - `on-run-end: elementary.on_run_end()` in `dbt_project.yml` triggers it
-- Creates ~15 tables in `dwh_udev.elementary`: `dbt_run_results`, `dbt_models`, `elementary_test_results` etc.
-- **One-time setup required:** `dbt run -s elementary --target udev` (run once to create the tables)
+- Creates 30 tables/views in `dwh_udev.elementary`: `dbt_run_results`, `dbt_models`, `elementary_test_results` etc.
+- **One-time setup required:** `dbt run -s elementary --target udev --full-refresh` (run once to create the tables)
 - Until setup is run, the hook fires but skips silently — doesn't break anything
+- Schema is configured by putting `elementary: +schema: elementary` under the top-level `models:` key in `dbt_project.yml`
+
+**Common pitfall:** If `dbt_project.yml` has two separate `models:` top-level keys, YAML silently discards the first. Always keep all model configs under one `models:` block.
 
 Used in Phase 13 for alert wiring. For now it's installed but dormant.
 
