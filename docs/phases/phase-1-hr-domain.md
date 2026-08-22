@@ -3,7 +3,7 @@
 **Goal:** Get one domain running end-to-end. HR only. No Airflow. No other domains.
 
 **Branch:** `phase/1-hr-domain`  
-**Status:** models built — run and verify pending
+**Status:** complete ✓ — verified 2026-08-22
 
 ---
 
@@ -128,6 +128,50 @@ SELECT * FROM dwh_udev.hr.hr__employee_summary;
 | `{{ this }}` — current model reference | `hr__employee_summary.sql` |
 | Backfill vars pattern | `hr__employee_summary.sql` |
 | `sources.yml` separate from model YML | `staging/hr/sources.yml` |
+
+---
+
+---
+
+## Issues encountered and resolved
+
+### 1. Wrong schema names (staging_hr instead of hr)
+**Cause:** dbt's default `generate_schema_name` macro prefixes `target.schema` + `custom_schema` → `staging_hr`.  
+**Fix:** Added `macros/generate_schema_name.sql` to use the custom schema directly.  
+**Learning:** Every production dbt project needs this override. See `docs/dbt-fundamentals.md`.
+
+### 2. Invalid PAT token
+**Cause:** Token generated via Databricks UI came in an unexpected format (no `dapi` prefix). The `databricks-sql-connector` rejected it with 401.  
+**Fix:** Used the MCP token (`dapifbacdbb...`) which is a valid Databricks PAT.  
+**Learning:** Valid Databricks PATs always start with `dapi`. If a generated token doesn't, something went wrong during generation.
+
+### 3. Seed in wrong schema after macro fix
+**Cause:** First run (before macro fix) loaded seed into `staging_seeds`. After macro fix, models expected it in `seeds`.  
+**Fix:** Re-ran `dbt seed` to reload into correct schema.  
+**Learning:** When schema naming changes, re-seed before building. Seed tags are separate from domain tags — run `dbt seed` independently.
+
+### 4. `dbt build --select tag:hr` doesn't include seeds
+**Cause:** Seed is tagged `seeds`, not `hr`. The selector skips it.  
+**Fix:** Run `dbt seed` separately, then `dbt build --select tag:hr`.  
+**Design decision:** Seeds kept separate — they're shared reference data, not domain-specific.
+
+---
+
+## Verified output
+
+```sql
+SELECT * FROM dwh_udev.hr.hr__employee_summary;
+-- 6 rows
+```
+
+| event_date | site_id | department | salary_band | employees | active | avg_salary |
+|---|---|---|---|---|---|---|
+| 2026-08-18 | 1 | Engineering | mid | 1 | 1 | 75,000 |
+| 2026-08-18 | 1 | Sales | mid | 1 | 1 | 65,000 |
+| 2026-08-18 | 2 | Engineering | senior | 1 | 0 | 80,000 |
+| 2026-08-19 | 1 | Sales | senior | 1 | 1 | 90,000 |
+| 2026-08-19 | 2 | Operations | junior | 1 | 1 | 55,000 |
+| 2026-08-20 | 3 | Engineering | mid | 1 | 1 | 72,000 |
 
 ---
 

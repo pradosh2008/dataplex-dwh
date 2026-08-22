@@ -108,6 +108,13 @@ Status: models built, not yet run against warehouse
 - Serverless SQL warehouse (`dwh-udev`) used throughout due to Databricks trial constraint (no classic clusters available)
 - `sources.yml` kept separate from model YML — one per domain folder, shared by all staging models in that domain
 - Intermediate model kept ephemeral — pure enrichment logic, never queried directly
+- `macros/generate_schema_name.sql` added — overrides dbt's default schema prefixing behaviour so models land in clean schemas (`hr`, `staging`) instead of `staging_hr`, `staging_staging`
+- PAT for dbt: `dapifbacdbb...` (same as MCP token) — the token generated via Databricks UI came in an invalid format (non-`dapi` prefix); MCP token works for both
+
+**Verified output (2026-08-22):**
+- `dwh_udev.staging.stg_hr__employees` — view ✓
+- `dwh_udev.seeds.seed_hr__department_lkp` — 4 rows ✓
+- `dwh_udev.hr.hr__employee_summary` — 6 rows ✓
 
 ---
 
@@ -115,7 +122,7 @@ Status: models built, not yet run against warehouse
 
 | Phase | Branch (planned) | Status |
 |---|---|---|
-| 1 — HR domain, first model | `phase/1-hr-domain` | in progress |
+| 1 — HR domain, first model | `phase/1-hr-domain` | complete — pending merge |
 | 2 — Marketplace domain | `phase/2-marketplace` | pending |
 | 3 — Payments domain | `phase/3-payments` | pending |
 | 4–17 | see `docs/spec.md` | pending |
